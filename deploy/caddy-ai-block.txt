@@ -1,0 +1,29 @@
+
+# ai.skabene.id.lv -- curated AI newsfeed (ai-news.service, 127.0.0.1:8931).
+# Source: https://github.com/noiseparty/ai-news deploy/caddy-ai-block.txt
+ai.skabene.id.lv {
+	encode zstd gzip
+
+	# PUBLIC on purpose: this is a published newsfeed with RSS. No basic_auth. Writes are
+	# guarded by the app itself (/admin login + ADMIN_TOKEN bearer for /api/*).
+
+	# Same trust boundary as every other site on this origin: a client must never be able to
+	# set these. server.js reads X-Forwarded-For for rate limiting and takes the LAST hop, which
+	# is the one reverse_proxy appends after this strip, so a client cannot spoof its IP.
+	request_header -X-Auth-User
+	request_header -X-Auth-Email
+	request_header -X-Auth-Role
+	request_header -X-Auth-App
+	request_header -X-Gateway-Secret
+	request_header -X-Forwarded-Uri
+	request_header -X-Forwarded-For
+	request_header -X-Forwarded-Host
+	request_header -X-Forwarded-Proto
+
+	reverse_proxy 127.0.0.1:8931
+
+	log {
+		output file /var/log/caddy/ai.log
+		format console
+	}
+}

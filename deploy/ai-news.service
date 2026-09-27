@@ -1,0 +1,72 @@
+# /etc/systemd/system/ai-news.service
+#
+# ai.skabene.id.lv -- the curated AI newsfeed (server.js). Loopback only on 127.0.0.1:8931;
+# Caddy terminates TLS in front of it. The site is public; /admin and /api/* are guarded by
+# the app's own ADMIN_TOKEN, which lives in /etc/ai-news.env (root:root 0600, read by systemd
+# before the sandboxed process starts).
+
+[Unit]
+Description=ai.skabene.id.lv - curated AI newsfeed (loopback only, fronted by Caddy)
+Documentation=https://github.com/noiseparty/ai-news
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ai-news
+DynamicUser=yes
+StateDirectory=ai-news
+StateDirectoryMode=0700
+EnvironmentFile=/etc/ai-news.env
+Environment=HOST=127.0.0.1
+Environment=PORT=8931
+Environment=DATA_DIR=/var/lib/ai-news
+Environment=BASE_URL=https://ai.skabene.id.lv
+Environment=NODE_OPTIONS=--no-warnings
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=15
+MemoryMax=256M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-news
+
+# --- Hardening ------------------------------------------------------------------------
+# server.js serves HTTP on loopback, reads/writes JSON under /var/lib/ai-news, and makes
+# outbound HTTP(S) requests to arbitrary public sites for link previews (admin-only; the
+# app itself refuses private/loopback targets). So: no egress allowlist, everything else shut.
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+PrivateIPC=true
+KeyringMode=private
+RemoveIPC=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectProc=invisible
+ProcSubset=pid
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
+# AF_NETLINK: glibc getaddrinfo() needs it; without it every link-preview fetch fails with EAI_AGAIN.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+SocketBindAllow=tcp:8931
+SocketBindDeny=any
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0077
+# Left OFF: MemoryDenyWriteExecute (breaks V8 JIT), IPAddressDeny (previews fetch arbitrary hosts).
+
+[Install]
+WantedBy=multi-user.target

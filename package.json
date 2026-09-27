@@ -1,0 +1,14 @@
+{
+  "name": "ai-news",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hand-curated AI newsfeed with commentary, categories, RSS and a sign-up list. Zero dependencies.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "add": "node --env-file-if-exists=.env bin/add.js",
+    "test": "node --test"
+  }
+}
