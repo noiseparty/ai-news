@@ -74,7 +74,14 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 .source { margin: 0 0 4px; font: 500 0.75rem/1.3 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .item h3 { margin: 0; font-size: 1.3rem; line-height: 1.3; font-weight: 700; }
 .item h3 a { text-decoration: none; }
-.desc { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.desc { margin: 6px 0 0; color: var(--muted); font-size: 0.95rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 9; -webkit-box-orient: vertical; overflow: hidden; }
+.src-link {
+  display: inline-block; margin-top: 8px; padding: 2px 8px; max-width: 100%;
+  font: 0.72rem/1.5 var(--sans); color: var(--muted); text-decoration: none;
+  border: 1px solid var(--rule); border-radius: 99px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.src-link:hover { color: var(--accent); border-color: var(--accent); }
 .thumb img { width: 132px; height: 88px; object-fit: cover; border-radius: 4px; display: block; background: var(--rule); }
 .note { grid-column: 1 / -1; margin-top: 14px; padding: 12px 16px; background: var(--note-bg); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; }
 .note p { margin: 0 0 8px; }

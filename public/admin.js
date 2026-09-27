@@ -11,6 +11,7 @@
   const fetchBtn = document.getElementById('fetch-btn');
   const imgPreview = document.getElementById('img-preview');
   const composeTitle = document.getElementById('compose-title');
+  let titleTouched = false; // a title typed by hand wins over the fetched one
 
   async function api(method, path, body) {
     const res = await fetch(path, {
@@ -47,7 +48,7 @@
     try {
       const meta = await api('POST', '/api/preview', { url: f.url.value });
       f.url.value = meta.url;
-      f.title.value = meta.title;
+      if (!titleTouched || !f.title.value) f.title.value = meta.title;
       f.description.value = meta.description;
       f.siteName.value = meta.siteName;
       f.image.value = meta.image;
@@ -55,7 +56,7 @@
       details.hidden = false;
       if (meta.duplicateOf) say('You already posted this link.', 'err');
       else if (meta.error) say(`Couldn't read the page (${meta.error}). Fill in the title yourself.`, 'err');
-      (meta.title ? f.comment : f.title).focus();
+      (f.title.value ? f.comment : f.title).focus();
     } catch (err) {
       say(err.message, 'err');
     } finally {
@@ -66,6 +67,7 @@
 
   function resetForm() {
     form.reset();
+    titleTouched = false;
     f.id.value = '';
     details.hidden = true;
     imgPreview.hidden = true;
@@ -81,6 +83,7 @@
     f.url.value = item.url;
     f.url.readOnly = true;
     f.title.value = item.title;
+    titleTouched = true;
     f.description.value = item.description || '';
     f.siteName.value = item.siteName || '';
     f.image.value = item.image || '';
@@ -101,17 +104,25 @@
     if (e.key === 'Enter' && details.hidden) { e.preventDefault(); preview(); }
   });
   f.image.addEventListener('change', showImage);
+  f.title.addEventListener('input', () => { titleTouched = true; });
   cancelBtn.addEventListener('click', resetForm);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (details.hidden) return preview();
-    const body = {
+    // Without a preview, only send what was typed; the server fetches the page for the rest.
+    const previewed = !details.hidden && Boolean(f.title.value);
+    const body = previewed ? {
       url: f.url.value,
       title: f.title.value,
       description: f.description.value,
       siteName: f.siteName.value,
       image: f.image.value,
+      comment: f.comment.value,
+      category: f.category.value,
+      previewed: true,
+    } : {
+      url: f.url.value,
+      title: f.title.value,
       comment: f.comment.value,
       category: f.category.value,
     };

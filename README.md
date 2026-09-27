@@ -31,7 +31,7 @@ npm test
 3. **Terminal**:
    ```sh
    npm run add -- https://example.com/article "My comment" --cat models
-   # optional: --title "Manual title" (skips fetching the page)
+   # optional: --title "My own title" (overrides the page title; summary + image still fetched)
    ```
    Posts through the API of whichever server `AI_NEWS_URL` points at, so it works
    against the live site too.

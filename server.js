@@ -167,7 +167,7 @@ function sanitizeImage(v) {
 
 function applyFields(item, body) {
   if ('title' in body) item.title = str(body.title, 300);
-  if ('description' in body) item.description = str(body.description, 1000);
+  if ('description' in body) item.description = str(body.description, 1500);
   if ('siteName' in body) item.siteName = str(body.siteName, 100) || item.siteName;
   if ('image' in body) item.image = sanitizeImage(body.image);
   if ('comment' in body) item.comment = String(body.comment ?? '').trim().slice(0, 5000);
@@ -185,12 +185,15 @@ async function createItem(body) {
   const existing = items.data.find((i) => i.url === url);
   if (existing) throw Object.assign(new HttpError(409, 'This link is already posted'), { id: existing.id });
 
+  // Always fetch so summary and image are filled in; a custom title in `body` then
+  // overrides the fetched one. Only an unreadable page with no custom title is an error.
+  // The admin form sends everything it previewed, so it skips the second fetch.
   let meta = { title: '', description: '', image: '', siteName: new URL(url).hostname.replace(/^www\./, '') };
-  if (!str(body.title, 300)) {
+  if (!body.previewed) {
     try {
       meta = await fetchMeta(url);
     } catch (err) {
-      throw new HttpError(422, `Couldn't read the page (${err.message}). Enter a title manually.`);
+      if (!str(body.title, 300)) throw new HttpError(422, `Couldn't read the page (${err.message}). Enter a title manually.`);
     }
   }
 
@@ -198,13 +201,13 @@ async function createItem(body) {
     id: crypto.randomBytes(6).toString('base64url'),
     url,
     title: str(meta.title, 300),
-    description: str(meta.description, 1000),
+    description: str(meta.description, 1500),
     image: meta.image,
     siteName: str(meta.siteName, 100),
     category: DEFAULT_CATEGORY,
     comment: '',
     addedAt: new Date().toISOString(),
-  }, Object.fromEntries(Object.entries(body).filter(([k, v]) => k !== 'url' && v != null && v !== '')));
+  }, Object.fromEntries(Object.entries(body).filter(([k, v]) => k !== 'url' && k !== 'previewed' && v != null && v !== '')));
 
   items.data.unshift(item);
   items.save();

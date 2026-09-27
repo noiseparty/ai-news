@@ -55,3 +55,27 @@ test('formatComment escapes HTML, keeps paragraphs and links URLs', () => {
   assert.equal(out, '<p>&lt;b&gt;hi&lt;/b&gt;<br>line two</p><p>see <a href="https://x.com/a?b=1&amp;c=2" rel="noopener nofollow" target="_blank">https://x.com/a?b=1&amp;c=2</a>.</p>');
   assert.equal(esc(`"'`), '&quot;&#39;');
 });
+
+test('parseMeta uses article paragraphs when the meta description is short', () => {
+  const para = 'Researchers released a new open-weights model that matches frontier systems on reasoning benchmarks while using a fraction of the compute.';
+  const html = `<meta name="description" content="Short blurb.">
+    <nav><p>Home · Models · Research · About us and our many navigation links here</p></nav>
+    <article><h1>T</h1><p>By staff</p><p>${para}</p><p>Accept all cookies to continue browsing this site and see our cookie policy.</p><p>${para} Second copy.</p></article>`;
+  const m = parseMeta(html, 'https://a.com/x');
+  assert.ok(m.description.startsWith('Researchers released'), m.description);
+  assert.ok(!/cookie|Home ·/.test(m.description));
+  assert.ok(m.description.length > 200);
+});
+
+test('parseMeta keeps a long meta description as is', () => {
+  const long = 'A '.repeat(200).trim() + '.';
+  const m = parseMeta(`<meta property="og:description" content="${long}"><p>${'x '.repeat(100)}</p>`, 'https://a.com/');
+  assert.equal(m.description, long);
+});
+
+test('truncate prefers sentence ends, else word boundary with ellipsis', () => {
+  const { truncate } = require('../lib/meta');
+  assert.equal(truncate('One two three. Four five six seven.', 20), 'One two three.');
+  assert.equal(truncate('alpha beta gamma delta epsilon', 18), 'alpha beta gamma…');
+  assert.equal(truncate('short', 20), 'short');
+});
