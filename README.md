@@ -73,3 +73,16 @@ npm test
   out every session.
 - Login and subscribe are rate limited per IP. Behind Caddy, the last
   `X-Forwarded-For` hop is used as the client IP.
+
+## Deploy (ai.skabene.id.lv)
+
+```sh
+bash deploy/deploy.sh
+```
+
+Pushes the code to `/opt/ai-news` on the VPS and installs `ai-news.service`
+(`DynamicUser`, loopback `127.0.0.1:8931`). It then appends the Caddy block once,
+validating first and rolling back on failure. Posts and subscribers live in
+`/var/lib/ai-news`, which a redeploy never touches. `ADMIN_TOKEN` is generated
+on the first deploy into `/etc/ai-news.env` (root 0600) and kept after that.
+To read it: `ssh root@84.247.128.86 cat /etc/ai-news.env`.
